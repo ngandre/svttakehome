@@ -4,26 +4,23 @@ using SVT.Models;
 public static class RobotLocator {
 
     public static ClosestResponseModel? FindClosestRobot(IEnumerable<Robot> robots, double targetX, double targetY) {
-        var closest = robots.Where(r => r.BatteryLevel > 0).Min(Comparer<Robot>.Create((a, b) => {
-            // get each robot's distance to payload
-            var aDistance = Math.Sqrt(Math.Pow(a.X - targetX, 2) + Math.Pow(a.Y - targetY, 2));
-            var bDistance = Math.Sqrt(Math.Pow(b.X - targetX, 2) + Math.Pow(b.Y - targetY, 2));
-
-            // if distance to payload is the same, compare battery life
-            if(aDistance == bDistance) {
+        var closest = robots.Where(r => r.BatteryLevel > 0).Select(r => new ClosestResponseModel {
+            RobotId = r.RobotId,
+            DistanceToGoal = GetDistance(targetX, targetY, r.X, r.Y),
+            BatteryLevel = r.BatteryLevel
+        }).Min(Comparer<ClosestResponseModel>.Create((a, b) => {
+            // choose greatest battery life if both robots are within 10 distance units of payload or there's a tie
+            if((a.DistanceToGoal <= 10.0 && b.DistanceToGoal <= 10.0 && a.BatteryLevel != b.BatteryLevel) || a.DistanceToGoal == b.DistanceToGoal) {
                 return a.BatteryLevel.CompareTo(b.BatteryLevel) * -1;
             }
-            return aDistance.CompareTo(bDistance);
+            return a.DistanceToGoal.CompareTo(b.DistanceToGoal);
         }));
-        if (closest == null) {
-            return null;
-        }
 
-        return new ClosestResponseModel {
-            RobotId = closest.RobotId,
-            DistanceToGoal = Math.Round(GetDistance(targetX, targetY, closest.X, closest.Y), 2),
-            BatteryLevel = closest.BatteryLevel
-        };
+        if (closest == null) return null;
+
+        closest.DistanceToGoal = Math.Round(closest.DistanceToGoal, 2);
+
+        return closest;
     }
 
     private static double GetDistance(double aX, double aY, double bX, double bY) {
