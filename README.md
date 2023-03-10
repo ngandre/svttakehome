@@ -8,7 +8,7 @@ dotnet run --launch-profile 'https' --project ./SVT/SVT.csproj
 ```
 or http under port 5000 via:
 ```bash
-dotnet run --launch-profile 'https' --project ./SVT/SVT.csproj
+dotnet run --launch-profile 'http' --project ./SVT/SVT.csproj
 ```
 
 ## Usage
